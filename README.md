@@ -175,10 +175,5 @@ Contributions are welcome.
 
 6. Open a pull request.
 
-## 📄 License
-
-Add your project's license information here.
-
----
 
 Built with **PHP**, **Symfony**, **Doctrine**, and **Twig**. 🎯
