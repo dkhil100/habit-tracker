@@ -1,0 +1,218 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Sign In / Sign Up - HabitTracker{% endblock %}
+
+{% block body %}
+<style>
+  * { box-sizing: border-box; }
+  .auth-body-wrapper {
+    margin: 0;
+    background: #f0f7ff;
+    color: #abaab8;
+    min-height: calc(100vh - 4rem);
+    display: grid;
+    place-items: center;
+    overflow-x: hidden;
+    font-family: "Poppins", sans-serif;
+  }
+  :root {
+    --color-primary: #6577ff;
+    --color-dark: #5768ea;
+    --color-muted: #747b92;
+  }
+  .auth-body-wrapper ul { list-style: none; margin: 0; padding: 0; }
+  .auth-body-wrapper input, .auth-body-wrapper button {
+    font-family: inherit; color: inherit; border: 0; border-radius: 6px; box-sizing: border-box;
+  }
+  .auth-body-wrapper button { padding: 0; cursor: pointer; width: 100%; }
+  .auth-body-wrapper p { font-size: 10px; margin: 4px 0 0 0; text-align: center; }
+  .auth-body-wrapper p a { color: var(--color-primary); cursor: pointer; }
+  
+  /* Card dimensions */
+  .card {
+    display: flex; align-content: stretch; width: 840px; height: 600px;
+    border-radius: 28px; background: #ffffff; box-shadow: 0 12px 80px rgba(95, 98, 255, 0.08);
+  }
+  .card-nav {
+    position: relative; align-self: stretch; display: flex; flex-direction: column;
+    justify-content: center; width: 160px; flex-shrink: 0;
+  }
+  .card-nav .active-bar {
+    position: absolute; top: 33.33%; left: 0; height: 33.33%; transition: 0.4s ease-in-out;
+  }
+  .card-nav .active-bar::after {
+    content: ""; position: absolute; top: 50%; translate: 0 -50%; width: 6px; height: 60px;
+    border-top-right-radius: 8px; border-bottom-right-radius: 8px; background: var(--color-primary);
+  }
+  .card-nav li { flex: 1 1 auto; display: grid; place-items: center; }
+  .card-nav li button.active { color: var(--color-dark); }
+  .card-nav button {
+    background: transparent; border: 0; display: flex; flex-direction: column;
+    gap: 6px; align-items: center; justify-content: center; width: 100%; height: 100%; transition: 0.3s;
+  }
+  .card-nav button:not(.active):hover { opacity: 0.675; color: var(--color-dark); }
+  .card-nav button i { font-size: 22px; }
+  .card-nav img.logo { width: 40px; height: 40px; }
+  
+  .card-hero {
+    position: relative; display: flex; flex-direction: column; justify-content: flex-end;
+    margin: -30px 0; flex: 0 0 320px; border-radius: 32px; overflow: hidden; background: var(--color-primary);
+  }
+  .card-hero-inner { position: absolute; top: 0; left: 0; right: 0; transition: 0.5s ease-in-out; }
+  .card-hero-content { height: 660px; width: 100%; display: flex; flex-direction: column; justify-content: center; padding: 24px; }
+  .card-hero h2 { color: #f9f9f9; margin: 0 0 4px; font-size: 24px; text-align: left; font-weight: 600; padding-left: 24px; }
+  .card-hero h3 { color: #f9f9f9; opacity: 0.75; font-size: 13px; text-align: left; font-weight: 400; margin: 0; padding-left: 24px; }
+  .card-hero img { width: 100%; margin-top: 15px; max-height: 240px; object-fit: contain; }
+  
+  /* Explicit form section with safe inner width boundaries */
+  .card-form { position: relative; overflow: hidden; padding: 12px 24px; width: 360px; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+  .card-form .forms { position: absolute; height: 200%; left: 0; top: 0; width: calc(100% - 48px); margin-left: 24px; transition: 0.5s ease-in-out; }
+  .card-form form { height: 600px; padding: 5px 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; width: 100%; }
+  .card-form label { font-size: 10px; color: var(--color-muted); margin-bottom: 0; font-weight: 500; display: block; width: 100%; }
+  
+  .control { position: relative; width: 100%; }
+  .control input { background: #f2f3fd; border: 0; border-radius: 6px; width: 100%; padding: 0 10px; font-size: 11px; height: 28px; }
+  .control input:focus { outline-color: var(--color-primary); }
+  .control input::placeholder { color: #bdbcd2; }
+  .control i { color: var(--color-muted); position: absolute; top: 50%; right: 10px; translate: 0 -50%; transition: 0.3s; font-size: 12px; }
+  
+  .card-form form > button { color: #f9f9f9; border: 0; margin-top: 4px; background: var(--color-dark); font-weight: 500; height: 32px; font-size: 12px; width: 100%; }
+  .alert-error { background: #fef2f2; border: 1px solid #fee2e2; color: #dc2626; padding: 4px 8px; border-radius: 6px; font-size: 10px; margin-bottom: 2px; width: 100%; }
+</style>
+
+<div class="auth-body-wrapper">
+  <div class="card">
+    <!-- NAV SIDEBAR -->
+    <ul class="card-nav">
+      <li>
+        <img src="{{ asset('images/logo.svg') }}" class="logo" alt="Logo" />
+        <span class="active-bar"></span>
+      </li>
+      <li>
+        <button type="button" class="signin active" onclick="selectView('signin')">
+          <i class="ai-person-check"></i>
+          <span>Sign In</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="signup" onclick="selectView('signup')">
+          <i class="ai-person-add"></i>
+          <span>Sign Up</span>
+        </button>
+      </li>
+    </ul>
+
+    <!-- HERO PANEL WITH IMAGES -->
+    <div class="card-hero">
+      <div class="card-hero-inner">
+        <div class="card-hero-content signin">
+          <h2>Welcome Back.</h2>
+          <h3>Please enter your credentials.</h3>
+          <img src="{{ asset('images/signin.svg') }}" alt="Sign In Illustration" />
+        </div>
+        <div class="card-hero-content signup">
+          <h2>Sign Up Now.</h2>
+          <h3>Join the crowd and track your habits.</h3>
+          <img src="{{ asset('images/signup.svg') }}" alt="Sign Up Illustration" />
+        </div>
+      </div>
+    </div>
+
+    <!-- FORMS CONTAINER -->
+    <div class="card-form">
+      <div class="forms">
+        
+        <!-- LOGIN FORM -->
+        <form id="signin" action="{{ path('app_login') }}" method="post" class="active">
+          {% if error %}
+            <div class="alert-error">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+          {% endif %}
+
+          <label>Email</label>
+          <div class="control">
+            <input type="email" name="email" value="{{ last_username }}" autocomplete="off" placeholder="youremail@gmail.com" required />
+            <i class="ai-envelope"></i>
+          </div>
+
+          <label>Password</label>
+          <div class="control">
+            <input type="password" name="password" placeholder="●●●●●●●●●●●●●●●" required />
+            <i class="ai-lock-on"></i>
+          </div>
+
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+          <button type="submit">Sign In</button>
+          <p>Don't have an account? <a onclick="selectView('signup')">Sign Up</a>.</p>
+        </form>
+
+        <!-- REGISTRATION FORM -->
+        {{ form_start(registrationForm, {'action': path('app_register'), 'attr': {'id': 'signup'}}) }}
+          <label>Username</label>
+          <div class="control">
+            {{ form_widget(registrationForm.username, {'attr': {'placeholder': 'myusername'}}) }}
+            <i class="ai-person"></i>
+          </div>
+
+          <label>Email</label>
+          <div class="control">
+            {{ form_widget(registrationForm.email, {'attr': {'placeholder': 'youremail@gmail.com'}}) }}
+            <i class="ai-envelope"></i>
+          </div>
+
+          <label>Birthdate</label>
+          <div class="control">
+            {{ form_widget(registrationForm.birthdate) }}
+          </div>
+
+          <label>Secret Word</label>
+          <div class="control">
+            {{ form_widget(registrationForm.sercetWord, {'attr': {'placeholder': 'secret word'}}) }}
+          </div>
+
+          <label>Password</label>
+          <div class="control">
+            {{ form_widget(registrationForm.plainPassword.first, {'attr': {'placeholder': '●●●●●●●●●●●●●●●'}}) }}
+            <i class="ai-lock-on"></i>
+          </div>
+
+          <label>Confirm Password</label>
+          <div class="control">
+            {{ form_widget(registrationForm.plainPassword.second, {'attr': {'placeholder': '●●●●●●●●●●●●●●●'}}) }}
+            <i class="ai-lock-on"></i>
+          </div>
+
+          <button type="submit">Sign Up</button>
+          <p>Already have an account? <a onclick="selectView('signin')">Sign In</a>.</p>
+        {{ form_end(registrationForm) }}
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const navButtons = document.querySelectorAll(".card-nav button"),
+    cardForms = document.querySelector(".card-form .forms"),
+    activeBar = document.querySelector(".active-bar"),
+    cardHeroInner = document.querySelector(".card-hero-inner");
+
+  const selectView = (view) => {
+    for (let button of navButtons) {
+      button.classList.remove("active");
+      if (button.classList.contains(view)) {
+        button.classList.add("active");
+      }
+    }
+
+    if (view === "signin") {
+      cardForms.style.top = "0";
+      activeBar.style.top = "33.33%";
+      cardHeroInner.style.top = "0";
+    } else {
+      cardForms.style.top = "-100%";
+      activeBar.style.top = "66.66%";
+      cardHeroInner.style.top = "-100%";
+    }
+  };
+</script>
+{% endblock %}

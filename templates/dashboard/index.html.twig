@@ -1,0 +1,289 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="min-h-[calc(100vh-4rem)] bg-gray-100 p-6">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
+        
+        <!-- LEFT SIDEBAR: Today's Habits & Submit Button -->
+        <div class="lg:col-span-1 bg-white rounded-xl shadow-sm p-5 flex flex-col justify-between border border-gray-200">
+            <div>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="font-bold text-gray-800 text-lg">Today's Habits</h2>
+                    <button type="button" onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow transition">
+                        + Add
+                    </button>
+                </div>
+                
+                <form action="{{ path('app_dashboard') }}" method="POST">
+                    <input type="hidden" name="save_logs" value="1">
+                    <ul class="space-y-3 mb-4">
+                        {% for habit in habits %}
+                            <li class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                <span class="text-sm font-medium text-gray-700 truncate max-w-[150px]" title="{{ habit.title }}">{{ habit.title }}</span>
+                                <input type="checkbox" name="habit_ids[]" value="{{ habit.id }}" 
+                                    {% if habit.id in todayCompletedIds %}checked{% endif %}
+                                    class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer">
+                            </li>
+                        {% else %}
+                            <p class="text-sm text-gray-400 text-center py-6">No habits found. Add one!</p>
+                        {% endfor %}
+                    </ul>
+
+                    {% if habits|length > 0 %}
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium py-2 rounded-lg shadow transition">
+                            Save Progress
+                        </button>
+                    {% endif %}
+                </form>
+            </div>
+            
+            <div class="mt-6 pt-4 border-t border-gray-100 text-xs text-gray-400 text-center">
+                Keep pushing forward! 💪
+            </div>
+        </div>
+
+        <!-- RIGHT MAIN AREA: Statistics & 10-Day Graph Grid -->
+        <div class="lg:col-span-3 flex flex-col gap-6">
+            
+            <!-- TOP SECTION: Statistics -->
+            <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-200">
+                <h3 class="font-bold text-gray-800 mb-3">Statistics</h3>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-100 text-center">
+                        <span class="block text-2xl font-bold text-indigo-600">{{ habits|length }}</span>
+                        <span class="text-xs text-gray-500 font-medium">Total Habits</span>
+                    </div>
+                    <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-100 text-center">
+                        <span class="block text-2xl font-bold text-emerald-600">Active</span>
+                        <span class="text-xs text-gray-500 font-medium">Status</span>
+                    </div>
+                    <div class="bg-amber-50 p-4 rounded-lg border border-amber-100 text-center">
+                        <span class="block text-2xl font-bold text-amber-600">--</span>
+                        <span class="text-xs text-gray-500 font-medium">Streak</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTTOM SPLIT: 10-Day Matrix Graph & Score/Badge -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- MIDDLE: 10 Days Track Matrix Graph -->
+                <div class="lg:col-span-2 bg-white rounded-xl shadow-sm p-5 border border-gray-200 overflow-x-auto">
+                    <h3 class="font-bold text-gray-800 mb-4">Last 10 Days Track</h3>
+                    
+                    {% if habits|length > 0 %}
+                        <div class="min-w-[500px]">
+                            <!-- Days Header Row -->
+                            <div class="grid grid-cols-11 gap-2 mb-2 text-center text-xs font-semibold text-gray-400 items-center">
+                                <div class="text-left">Habit</div>
+                                {% for day in last10Days %}
+                                    <div class="truncate" title="{{ day.label }}">{{ day.label|slice(3) }}</div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Habits Rows -->
+                            <div class="space-y-2">
+                                {% for habit in habits %}
+                                    <div class="grid grid-cols-11 gap-2 items-center">
+                                        <div class="text-xs font-medium text-gray-700 truncate pr-2 text-left" title="{{ habit.title }}">
+                                            {{ habit.title }}
+                                        </div>
+                                        {% for day in last10Days %}
+                                            {% set isDone = completedLogsMap[habit.id][day.key] ?? false %}
+                                            <div class="flex justify-center">
+                                                <div class="w-6 h-6 rounded-md border transition {{ isDone ? 'bg-emerald-500 border-emerald-600 shadow-sm' : 'bg-gray-50 border-gray-200' }}" 
+                                                     title="{{ habit.title }} on {{ day.label }}: {{ isDone ? 'Completed' : 'Missed' }}">
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="text-sm text-gray-400 text-center py-10">Add habits to populate your 10-day history graph.</p>
+                    {% endif %}
+                </div>
+
+                <!-- RIGHT SIDE: Score and Badge -->
+                <div class="lg:col-span-1 bg-white rounded-xl shadow-sm p-5 border border-gray-200 flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-gray-800 mb-4">Score & Badges</h3>
+                        <div class="flex flex-col items-center justify-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                            <span class="text-3xl font-extrabold text-indigo-600 mb-1">0 pts</span>
+                            <span class="text-xs text-gray-400">Current Score</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-100 text-center">
+                        <span class="inline-block bg-gray-100 text-gray-500 text-xs font-semibold px-3 py-1 rounded-full">
+                            🔒 No Badges Unlocked
+                        </span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- POPUP MODAL FOR ADDING HABIT -->
+<div id="habitModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 mx-4 relative max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-gray-800">Add New Habits</h3>
+            <button type="button" onclick="closeModal()" class="text-gray-400 hover:text-gray-600 font-bold">&times;</button>
+        </div>
+
+        <!-- Default Habit Pills Section (Loaded from Database) -->
+        <div class="mb-4">
+            <label class="block text-xs font-medium text-gray-500 mb-2">Default Habits (Click to select)</label>
+            <div class="flex flex-wrap gap-2">
+                {% for defHabit in defaultHabits %}
+                    <button type="button" class="habit-pill px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 border border-gray-200 transition" data-habit="{{ defHabit.title }}">{{ defHabit.title }}</button>
+                {% else %}
+                    <p class="text-xs text-gray-400">No habits found in database yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Custom Habit Input Row -->
+        <div class="mb-4">
+            <label class="block text-xs font-medium text-gray-500 mb-1">Write Custom Habit</label>
+            <div class="flex gap-2">
+                <input type="text" id="customHabitInput" placeholder="e.g., Code for 1 hour" class="flex-grow rounded-lg border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 outline-none">
+                <button type="button" id="addCustomBtn" class="bg-gray-800 hover:bg-gray-900 text-white text-xs font-semibold px-4 rounded-lg transition">Add</button>
+            </div>
+        </div>
+
+        <!-- Selected Preview List -->
+        <div class="mb-5">
+            <label class="block text-xs font-medium text-gray-500 mb-1">Habits Queue</label>
+            <ul id="habitListContainer" class="space-y-2 max-h-40 overflow-y-auto border border-gray-100 rounded-lg p-2 bg-gray-50">
+                <li id="emptyQueueMsg" class="text-xs text-gray-400 text-center py-3">No habits selected yet.</li>
+            </ul>
+        </div>
+
+        <!-- Symfony Form Integration -->
+        {{ form_start(habitForm, {'action': path('app_dashboard'), 'method': 'POST', 'attr': {'id': 'saveHabitsForm'}}) }}
+            <input type="hidden" name="add_habit" value="1">
+            <!-- Container for dynamic multi-inputs injection -->
+            <div id="hiddenInputsContainer"></div>
+
+            <!-- Hide the default Symfony form field explicitly -->
+            <div class="hidden">
+                {{ form_row(habitForm.title) }}
+            </div>
+
+            <div class="flex justify-end space-x-2 pt-2">
+                <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition">Cancel</button>
+                <button type="submit" id="saveHabitsBtn" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition opacity-50 cursor-not-allowed" disabled>Save Habits</button>
+            </div>
+        {{ form_end(habitForm) }}
+    </div>
+</div>
+
+<style>
+  .habit-pill.selected {
+    background-color: #4f46e5 !important;
+    color: #ffffff !important;
+    border-color: #4338ca !important;
+  }
+</style>
+
+<script>
+    const selectedHabits = new Set();
+    const habitPills = document.querySelectorAll('.habit-pill');
+    const customInput = document.getElementById('customHabitInput');
+    const addCustomBtn = document.getElementById('addCustomBtn');
+    const habitListContainer = document.getElementById('habitListContainer');
+    const hiddenInputsContainer = document.getElementById('hiddenInputsContainer');
+    const saveHabitsBtn = document.getElementById('saveHabitsBtn');
+
+    function openModal() {
+        document.getElementById('habitModal').classList.remove('hidden');
+        document.getElementById('habitModal').classList.add('flex');
+    }
+
+    function closeModal() {
+        document.getElementById('habitModal').classList.remove('flex');
+        document.getElementById('habitModal').classList.add('hidden');
+    }
+
+    // Toggle default pills
+    habitPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            const habitText = pill.getAttribute('data-habit');
+            if (selectedHabits.has(habitText)) {
+                selectedHabits.delete(habitText);
+                pill.classList.remove('selected');
+            } else {
+                selectedHabits.add(habitText);
+                pill.classList.add('selected');
+            }
+            renderList();
+        });
+    });
+
+    // Add custom habit via button
+    addCustomBtn.addEventListener('click', () => {
+        const text = customInput.value.trim();
+        if (text && !selectedHabits.has(text)) {
+            selectedHabits.add(text);
+            customInput.value = '';
+            renderList();
+        }
+    });
+
+    // Support enter key inside custom input
+    customInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addCustomBtn.click();
+        }
+    });
+
+    function renderList() {
+        habitListContainer.innerHTML = '';
+        hiddenInputsContainer.innerHTML = '';
+
+        if (selectedHabits.size === 0) {
+            habitListContainer.innerHTML = '<li id="emptyQueueMsg" class="text-xs text-gray-400 text-center py-3">No habits selected yet.</li>';
+            saveHabitsBtn.disabled = true;
+            saveHabitsBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            return;
+        }
+
+        saveHabitsBtn.disabled = false;
+        saveHabitsBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+        let index = 0;
+        selectedHabits.forEach(habit => {
+            // Visual row in queue
+            const li = document.createElement('li');
+            li.className = 'flex justify-between items-center bg-white p-2 rounded border border-gray-200 text-xs';
+            li.innerHTML = `<span class="font-medium text-gray-700">${habit}</span> <button type="button" onclick="removeHabit('${habit.replace(/'/g, "\\'")}')" class="text-red-500 hover:text-red-700 font-bold px-1">&times;</button>`;
+            habitListContainer.appendChild(li);
+
+            // Hidden input bound to form fields so Symfony receives the list elements
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = `habits[${index}]`;
+            hiddenInput.value = habit;
+            hiddenInputsContainer.appendChild(hiddenInput);
+
+            index++;
+        });
+    }
+
+    window.removeHabit = function(habitText) {
+        selectedHabits.delete(habitText);
+        habitPills.forEach(pill => {
+            if (pill.getAttribute('data-habit') === habitText) {
+                pill.classList.remove('selected');
+            }
+        });
+        renderList();
+    };
+</script>
+{% endblock %}
